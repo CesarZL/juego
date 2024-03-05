@@ -69,6 +69,11 @@ class Deck {
   }
 }
 
+// Agregar esta función al backend
+function updateProgress(room, progress) {
+  io.in(room).emit("update_progress", progress);
+}
+
 
 // Manejo de conexion a la sala
 io.on("connection", (socket) => {
@@ -125,6 +130,7 @@ io.on("connection", (socket) => {
       console.log(error.message);
     }
   });
+  
 
   // Manejo de desconexión de jugador de la sala
   socket.on("disconnect", () => {
@@ -166,13 +172,11 @@ io.on("connection", (socket) => {
     }
   });
 
-  let current_room;
-
   // Manejo de inicio de juego
   socket.on("start_game", (room) => {
     try {
       io.in(room).emit("start_game");
-      sockets[room].start = true;
+      sockets[room].start = true;      
 
       // Crear el mazo de cartas usando la clase Deck y las cartas del archivo JSON
       sockets[room].deck = new Deck([...cartas.blanca]);
@@ -180,6 +184,20 @@ io.on("connection", (socket) => {
         sockets[room].deck.reset();
         sockets[room].deck.shuffle();
       }
+
+      let timeLeft = 20;
+      let steps = 200;
+      const progressInterval = setInterval(() => {
+        if (steps <= 0) {
+          clearInterval(progressInterval);
+          io.in(room).emit("round_finished");
+          updateProgress(room, 100);
+        } else {
+          const currentProgress = 100 - (steps / 2);
+          updateProgress(room, currentProgress);
+          steps -= 1;
+        }
+      }, 100); 
 
       // Obtener una carta negra para todos
       sockets[room].opencard = cartas.negra[Math.floor(Math.random() * cartas.negra.length)];
@@ -196,17 +214,12 @@ io.on("connection", (socket) => {
         let playerNames = sockets[room].names;
         io.to(player).emit("start_variables", { opencard, cards, playerNames });
         // imprimir opencard
-        console.log(opencard);
+        // console.log(opencard);
         //imprimir cartas de los jugadores
-        console.log(cards);
+        // console.log(cards);
       });
 
-      current_room = Array.from(io.sockets.adapter.rooms.get(room));
-      sockets[room]._turn = 0;
-      io.in(room).emit(
-        "your_turn",
-        io.sockets.sockets.get(current_room[0]).nickname
-      );
+
     } catch (error) {
       console.log(error.message);
     }

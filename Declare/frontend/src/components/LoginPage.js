@@ -46,7 +46,7 @@ const LoginPage = ({ socket, setLoggedIn, name, setName, room, setRoom }) => {
             <div className="rounded-md flex justify-center flex-wrap text-xl font-medium text-center bg-indigo-100 text-purple-600 hover:text-purple-600 dark:text-purple-500 dark:bg-indigo-200 dark:border-indigo-500">
               <div className="w-full p-4 flex items-center justify-center">
                 <svg className="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13v5l-5-1-5 1v-5l5-1 5 1zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 13h2v2h-2v-2zm0-6h2v5h-2v-5z" />
+                  <path stroke-linejoin="round" stroke-width="2" d="M17 13v5l-5-1-5 1v-5l5-1 5 1zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 13h2v2h-2v-2zm0-6h2v5h-2v-5z" />
                 </svg>
                 Unirse o crear partida
               </div>

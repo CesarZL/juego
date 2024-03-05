@@ -7,7 +7,9 @@ const Game = ({ socket, name, room, setLoggedIn }) => {
   const [playerCards, setPlayerCards] = useState([]);
   const [selectedCardIndex, setSelectedCardIndex] = useState(null);
   const [progress, setProgress] = useState(0);
-  const [startTime, setStartTime] = useState(null);
+  const [roundFinished, setRoundFinished] = useState(false);
+  const [randomCardSelected, setRandomCardSelected] = useState(false);
+
 
   class Card {
     constructor(card) {
@@ -16,23 +18,19 @@ const Game = ({ socket, name, room, setLoggedIn }) => {
   }
 
   useEffect(() => {
-    const animateProgress = (timestamp) => {
-      if (!startTime) {
-        setStartTime(timestamp);
+
+    socket.current.on("round_finished", () => {
+      setRoundFinished(true);
+      // Si no se ha seleccionado ninguna carta, elige una al azar y marca como seleccionada
+      if (selectedCardIndex === null && !randomCardSelected) {
+        const randomIndex = Math.floor(Math.random() * playerCards.length);
+        setSelectedCardIndex(randomIndex);
+        setRandomCardSelected(true);
       }
-
-      const elapsed = timestamp - startTime;
-      const duration = 20000; // 20 seconds
-
-      if (elapsed < duration) {
-        setProgress((elapsed / duration) * 100);
-        requestAnimationFrame(animateProgress);
-      } else {
-        setProgress(100);
-      }
-    };
-
-    const animationId = requestAnimationFrame(animateProgress);
+    });
+    socket.current.on("update_progress", (newProgress) => {
+      setProgress(newProgress);
+    });
 
     socket.current.on("start_variables", ({ opencard, cards, playerNames }) => {
       setOpencard(new Card(opencard));
@@ -49,10 +47,7 @@ const Game = ({ socket, name, room, setLoggedIn }) => {
       socket.current.emit("leave_room", { name, room });
       window.alert(`${message}`);
     });
-
-    // Cleanup animation on component unmount
-    return () => cancelAnimationFrame(animationId);
-  }, [socket.current, startTime]);
+  }, [socket.current, selectedCardIndex, playerCards, randomCardSelected]);
 
   const endGame = () => {
     setLoggedIn(false);
@@ -60,16 +55,22 @@ const Game = ({ socket, name, room, setLoggedIn }) => {
   };
 
   const handleCardClick = (index) => {
-    setSelectedCardIndex(index);
+    if (!roundFinished) {
+      setSelectedCardIndex(index);
+      setRandomCardSelected(false); // Restablecer al seleccionar una carta
+      console.log(playerCards[index].card);
+    }
   };
 
   const carta_negra = opencard ? opencard.card : "";
 
-  return (
-    <div className="bg-repeat bg-gray-300 dark:bg-gray-700" style={{ backgroundImage: 'url(https://md.rereadgames.com/assets/images/background.9fd67490ba48987ac0c8.svg)' }}>
+  // var progress =  75;
 
-      {/* Progress bar */}
-      <div className="fixed top-0 left-0 right-0 h-2 bg-green-500" style={{ width: `${progress}%` }}></div>
+  return (
+    <div className="bg-repeat bg-gray-300 dark:bg-gray-700" style={{backgroundImage: 'url(https://md.rereadgames.com/assets/images/background.9fd67490ba48987ac0c8.svg)'}}>
+
+    {/* actualemente solo muestra 75 falta hacer que suba dinamicamente */}
+    <div className="fixed top-0 left-0 right-0 h-2 bg-green-500" style={{ width: `${progress}%` }}></div>
 
     <section className="h-screen flex flex-col items-center justify-center overflow-hidden">
       <div className="bg-black rounded-lg px-5 py-4 m-2 text-white w-64 h-96 mb-4 overflow-auto">
@@ -90,6 +91,7 @@ const Game = ({ socket, name, room, setLoggedIn }) => {
               onClick={() => handleCardClick(index)}
             >
               <p className="text-2xl font-bold">{card.card}</p>
+              <p className="text-sm text-gray-500">{index}</p>
             </div>
           </div>
         ))}
@@ -112,7 +114,7 @@ const Game = ({ socket, name, room, setLoggedIn }) => {
             fill="none"
             viewBox="0 0 18 18"
           >
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 1v16M1 9h16" />
+            <path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M9 1v16M1 9h16" />
           </svg>
         </button>
       </div>
